@@ -1,0 +1,1 @@
+- [URL safety boundary](phishguard-ai.md) — submitted URLs are parsed locally only; the heuristic engine stays useful without an AI provider.

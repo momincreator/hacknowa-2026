@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: analysis
+    description: Suspicious URL risk assessment operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,62 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /analyze-url:
+    post:
+      operationId: analyzeUrl
+      tags: [analysis]
+      summary: Analyze a URL for suspicious signals
+      description: Performs a safe, explainable heuristic assessment without visiting the submitted URL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UrlAnalysisInput"
+      responses:
+        "200":
+          description: URL risk assessment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UrlAnalysis"
+        "400":
+          description: Invalid URL input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /analyze-url/explanation:
+    post:
+      operationId: generateUrlExplanation
+      tags: [analysis]
+      summary: Generate an optional AI explanation for a URL assessment
+      description: Uses a server-side AI provider when configured; never visits the submitted URL.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UrlExplanationInput"
+      responses:
+        "200":
+          description: AI explanation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UrlExplanation"
+        "400":
+          description: Invalid URL input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: AI provider is not configured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +91,100 @@ components:
           type: string
       required:
         - status
+    UrlAnalysisInput:
+      type: object
+      properties:
+        url:
+          type: string
+          minLength: 1
+          maxLength: 2048
+      required:
+        - url
+    RiskLevel:
+      type: string
+      enum: [low, medium, high]
+    SignalSeverity:
+      type: string
+      enum: [positive, caution, danger]
+    UrlSignal:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        detail:
+          type: string
+        severity:
+          $ref: "#/components/schemas/SignalSeverity"
+        points:
+          type: integer
+        category:
+          type: string
+      required: [id, label, detail, severity, points, category]
+    UrlAnalysis:
+      type: object
+      properties:
+        inputUrl:
+          type: string
+        normalizedUrl:
+          type: string
+        domain:
+          type: string
+        risk:
+          $ref: "#/components/schemas/RiskLevel"
+        score:
+          type: integer
+        summary:
+          type: string
+        signals:
+          type: array
+          items:
+            $ref: "#/components/schemas/UrlSignal"
+        recommendations:
+          type: array
+          items:
+            type: string
+        analyzedAt:
+          type: string
+          format: date-time
+        aiAvailable:
+          type: boolean
+      required:
+        - inputUrl
+        - normalizedUrl
+        - domain
+        - risk
+        - score
+        - summary
+        - signals
+        - recommendations
+        - analyzedAt
+        - aiAvailable
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    UrlExplanationInput:
+      type: object
+      properties:
+        url:
+          type: string
+          minLength: 1
+          maxLength: 2048
+        signals:
+          type: array
+          items:
+            $ref: "#/components/schemas/UrlSignal"
+      required: [url, signals]
+    UrlExplanation:
+      type: object
+      properties:
+        explanation:
+          type: string
+        provider:
+          type: string
+      required: [explanation, provider]
 

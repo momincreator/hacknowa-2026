@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "PhishGuard AI"
+description = "A mobile-first cybersecurity web app that evaluates suspicious URLs with explainable heuristics and presents clear risk guidance before users click."
+version = "1.0.0"
+id = "artifacts/phishguard-ai"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24262
+
+[services.development]
+run = "pnpm --filter @workspace/phishguard-ai run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/phishguard-ai", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/phishguard-ai/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24262"
+BASE_PATH = "/"

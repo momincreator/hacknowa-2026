@@ -1,15 +1,14 @@
-# [Project name]
+# PhishGuard AI
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+PhishGuard AI analyzes suspicious URL text with safe, explainable heuristics before a user clicks.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server
+- `pnpm --filter @workspace/phishguard-ai run dev` — run the frontend
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
 
 ## Stack
 
@@ -22,23 +21,32 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/phishguard-ai/src/App.tsx` — responsive single-page analyzer UI
+- `artifacts/phishguard-ai/src/index.css` — visual theme and responsive styling
+- `artifacts/api-server/src/lib/url-analyzer.ts` — safe heuristic engine and optional AI provider adapter
+- `artifacts/api-server/src/routes/analyze-url.ts` — analysis and AI explanation endpoints
+- `lib/api-spec/openapi.yaml` — API source of truth
+- `README.md` — product, setup, analysis, AI, and limitations documentation
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Submitted links are parsed locally and never fetched, so analysis cannot trigger a suspicious destination.
+- The heuristic engine remains fully functional without AI credentials; AI is an optional server-side explanation layer.
+- OpenAPI generates both the frontend React Query client and server validation schemas.
+- No database is required because the product does not persist user-submitted URLs.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Users paste a URL, receive a low/medium/high risk assessment, review the signals behind it, and get practical next steps.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Mobile-first, hackathon-demo-ready cybersecurity UX with clear non-alarmist language.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- `lib/api-spec/openapi.yaml` must be updated before rerunning codegen.
+- AI provider values are server-only environment variables and must never be exposed in frontend code.
 
 ## Pointers
 
