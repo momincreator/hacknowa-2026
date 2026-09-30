@@ -53,7 +53,7 @@ router.post("/analyze-url/explanation", async (req, res): Promise<void> => {
   res.json(
     GenerateUrlExplanationResponse.parse({
       explanation,
-      provider: "configured server-side AI provider",
+      provider: "Gemini",
     }),
   );
 });

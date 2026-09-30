@@ -30,17 +30,11 @@ These scores are a risk assessment, not a verdict. A safe-looking URL can still 
 
 ## AI integration
 
-The built-in heuristic engine is the default and does not require an AI provider. The API also includes `POST /api/analyze-url/explanation`, which can call an OpenAI-compatible provider from the server when configured. The browser never receives or handles the provider key.
+The built-in heuristic engine is the default and does not require an AI provider. The API also includes `POST /api/analyze-url/explanation`, which can request an optional explanation from Gemini on the server. The browser never receives or handles the provider key.
 
-Optional environment variables:
+To enable Gemini explanations, add the Google AI API key as a Replit Secret named `GEMINI_API_KEY`. The server uses the Gemini 2.5 Flash model; no OpenAI key or browser-side key is required.
 
-```bash
-PHISHGUARD_AI_API_URL=https://your-provider.example/v1/chat/completions
-PHISHGUARD_AI_API_KEY=your-server-side-key
-PHISHGUARD_AI_MODEL=your-model-name
-```
-
-If these are not configured, the main analyzer still works normally and clearly reports that it is using heuristic analysis.
+If `GEMINI_API_KEY` is missing or Gemini is unavailable, the main analyzer still works normally and uses its existing heuristic assessment.
 
 ## Technologies
 
