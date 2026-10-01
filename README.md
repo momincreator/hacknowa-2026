@@ -32,7 +32,7 @@ These scores are a risk assessment, not a verdict. A safe-looking URL can still 
 
 The built-in heuristic engine is the default and does not require an AI provider. The API also includes `POST /api/analyze-url/explanation`, which can request an optional explanation from Gemini on the server. The browser never receives or handles the provider key.
 
-To enable Gemini explanations, add the Google AI API key as a Replit Secret named `GEMINI_API_KEY`. The server uses the Gemini 2.5 Flash model; no OpenAI key or browser-side key is required.
+To enable Gemini explanations, add the Google AI API key as a Replit Secret named `GEMINI_API_KEY`. The server uses the Gemini 3.8 Flash model; no OpenAI key or browser-side key is required.
 
 If `GEMINI_API_KEY` is missing or Gemini is unavailable, the main analyzer still works normally and uses its existing heuristic assessment.
 

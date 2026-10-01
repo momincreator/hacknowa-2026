@@ -1,1 +1,2 @@
 - [URL safety boundary](phishguard-ai.md) — submitted URLs are parsed locally only; the heuristic engine stays useful without an AI provider.
+- [Gemini model availability](gemini-api-models.md) — a model can appear in ListModels yet still be unavailable to new API keys; honor provider retirement guidance.
