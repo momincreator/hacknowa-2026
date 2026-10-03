@@ -67,7 +67,7 @@ export interface UrlExplanationInput {
      * @maxLength 2048
      */
   url: string;
-  signals: UrlSignal[];
+  analysis: UrlAnalysis;
 }
 
 export interface UrlExplanation {

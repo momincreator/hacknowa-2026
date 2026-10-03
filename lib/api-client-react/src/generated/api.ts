@@ -227,7 +227,7 @@ export const getGenerateUrlExplanationUrl = () => {
 
 
 
-  return `/api/analyze-url/explanation`
+  return `/api/analyze-url-explanation`
 }
 
 /**

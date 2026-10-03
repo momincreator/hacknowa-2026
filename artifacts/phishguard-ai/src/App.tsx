@@ -30,7 +30,12 @@ import {
   ShieldCheck,
   X,
 } from 'lucide-react';
-import { useAnalyzeUrl, type UrlAnalysis, type UrlSignal } from '@workspace/api-client-react';
+import {
+  useAnalyzeUrl,
+  useGenerateUrlExplanation,
+  type UrlAnalysis,
+  type UrlSignal,
+} from '@workspace/api-client-react';
 
 const queryClient = new QueryClient();
 
@@ -53,8 +58,11 @@ const examples = [
 
 function Home() {
   const [analysis, setAnalysis] = useState<UrlAnalysis | null>(null);
+  const [explanation, setExplanation] = useState<string | null>(null);
+  const [explanationUnavailable, setExplanationUnavailable] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const analyzeUrl = useAnalyzeUrl();
+  const generateExplanation = useGenerateUrlExplanation();
   const form = useForm<UrlForm>({
     resolver: zodResolver(urlSchema),
     defaultValues: { url: '' },
@@ -64,10 +72,22 @@ function Home() {
   const onSubmit = (values: UrlForm) => {
     setErrorMessage('');
     setAnalysis(null);
+    setExplanation(null);
+    setExplanationUnavailable(false);
     analyzeUrl.mutate(
       { data: { url: values.url.trim() } },
       {
-        onSuccess: (result) => setAnalysis(result),
+        onSuccess: (result) => {
+          const submittedUrl = values.url.trim();
+          setAnalysis(result);
+          generateExplanation.mutate(
+            { data: { url: submittedUrl, analysis: result } },
+            {
+              onSuccess: (response) => setExplanation(response.explanation),
+              onError: () => setExplanationUnavailable(true),
+            },
+          );
+        },
         onError: (error) => {
           const candidate = error as { response?: { data?: { error?: string } }; message?: string };
           setErrorMessage(
@@ -143,14 +163,14 @@ function Home() {
                 </div>
                 <button
                   type="submit"
-                  disabled={analyzeUrl.isPending}
+                  disabled={analyzeUrl.isPending || generateExplanation.isPending}
                   className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[14px] bg-primary px-6 text-sm font-bold text-primary-foreground transition-transform hover:-translate-y-0.5 hover:bg-primary/90 disabled:cursor-wait disabled:opacity-75 sm:min-w-[154px]"
                   data-testid="button-analyze-url"
                 >
-                  {analyzeUrl.isPending ? (
+                  {analyzeUrl.isPending || generateExplanation.isPending ? (
                     <>
                       <span className="size-4 animate-spin rounded-full border-2 border-primary-foreground/35 border-t-primary-foreground" />
-                      Checking
+                      {analyzeUrl.isPending ? 'Checking' : 'Generating'}
                     </>
                   ) : (
                     <>
@@ -194,8 +214,13 @@ function Home() {
         {analysis ? (
           <AnalysisResult
             analysis={analysis}
+            explanation={explanation}
+            explanationPending={generateExplanation.isPending}
+            explanationUnavailable={explanationUnavailable}
             onAnalyzeAnother={() => {
               setAnalysis(null);
+              setExplanation(null);
+              setExplanationUnavailable(false);
               setErrorMessage('');
               form.reset();
               document.getElementById('url-checker')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -261,9 +286,15 @@ function Explainer() {
 
 function AnalysisResult({
   analysis,
+  explanation,
+  explanationPending,
+  explanationUnavailable,
   onAnalyzeAnother,
 }: {
   analysis: UrlAnalysis;
+  explanation: string | null;
+  explanationPending: boolean;
+  explanationUnavailable: boolean;
   onAnalyzeAnother: () => void;
 }) {
   const risk = riskMeta(analysis.risk);
@@ -296,9 +327,19 @@ function AnalysisResult({
         <div className="rounded-[22px] border border-border bg-card p-5 sm:p-7">
           <div className="flex items-center justify-between"><h3 className="font-semibold">Recommended next steps</h3><Lightbulb className="size-4 text-primary" /></div>
           <ul className="mt-5 space-y-4">{analysis.recommendations.map((recommendation, index) => <li className="flex gap-3 text-sm leading-6" key={`${recommendation}-${index}`} data-testid={`recommendation-${index}`}><span className="mt-1 flex size-4 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="size-2.5" strokeWidth={3} /></span><span>{recommendation}</span></li>)}</ul>
-          <div className="mt-6 flex items-center gap-2 border-t border-border pt-4 text-xs text-muted-foreground"><Activity className="size-3.5 text-primary" /> {analysis.aiAvailable ? 'AI-assisted explanation available' : 'Heuristic analysis · no AI needed'}</div>
+          <div className="mt-6 flex items-center gap-2 border-t border-border pt-4 text-xs text-muted-foreground"><Activity className="size-3.5 text-primary" /> {explanation ? 'AI-assisted explanation' : explanationUnavailable ? 'AI explanation unavailable' : 'Heuristic analysis complete'}</div>
         </div>
       </div>
+      <section className="mt-5 rounded-[22px] border border-border bg-card p-5 sm:p-7" aria-live="polite" data-testid="section-ai-explanation">
+        <div className="flex items-center gap-3"><span className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary"><Lightbulb className="size-4" /></span><h3 className="font-semibold">AI explanation</h3></div>
+        {explanationPending ? (
+          <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground"><span className="size-3.5 animate-spin rounded-full border-2 border-primary/25 border-t-primary" />Generating explanation...</p>
+        ) : explanation ? (
+          <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-foreground" data-testid="text-ai-explanation">{explanation}</p>
+        ) : explanationUnavailable ? (
+          <p className="mt-4 text-sm text-muted-foreground" data-testid="text-ai-explanation-unavailable">AI explanation unavailable. Your heuristic assessment is still shown above.</p>
+        ) : null}
+      </section>
       <Signals signals={analysis.signals} />
     </section>
   );

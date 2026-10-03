@@ -60,6 +60,13 @@ export const generateUrlExplanationBodyUrlMax = 2048;
 
 export const GenerateUrlExplanationBody = zod.object({
   "url": zod.string().min(1).max(generateUrlExplanationBodyUrlMax),
+  "analysis": zod.object({
+  "inputUrl": zod.string(),
+  "normalizedUrl": zod.string(),
+  "domain": zod.string(),
+  "risk": zod.enum(['low', 'medium', 'high']),
+  "score": zod.number().int(),
+  "summary": zod.string(),
   "signals": zod.array(zod.object({
   "id": zod.string(),
   "label": zod.string(),
@@ -67,7 +74,11 @@ export const GenerateUrlExplanationBody = zod.object({
   "severity": zod.enum(['positive', 'caution', 'danger']),
   "points": zod.number().int(),
   "category": zod.string()
-}))
+})),
+  "recommendations": zod.array(zod.string()),
+  "analyzedAt": zod.coerce.date(),
+  "aiAvailable": zod.boolean()
+})
 })
 
 export const GenerateUrlExplanationResponse = zod.object({

@@ -51,7 +51,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-  /analyze-url/explanation:
+  /analyze-url-explanation:
     post:
       operationId: generateUrlExplanation
       tags: [analysis]
@@ -174,11 +174,9 @@ components:
           type: string
           minLength: 1
           maxLength: 2048
-        signals:
-          type: array
-          items:
-            $ref: "#/components/schemas/UrlSignal"
-      required: [url, signals]
+        analysis:
+          $ref: "#/components/schemas/UrlAnalysis"
+      required: [url, analysis]
     UrlExplanation:
       type: object
       properties:

@@ -5,7 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { UrlSignal } from './urlSignal';
+import type { UrlAnalysis } from './urlAnalysis';
 
 export interface UrlExplanationInput {
   /**
@@ -13,5 +13,5 @@ export interface UrlExplanationInput {
      * @maxLength 2048
      */
   url: string;
-  signals: UrlSignal[];
+  analysis: UrlAnalysis;
 }

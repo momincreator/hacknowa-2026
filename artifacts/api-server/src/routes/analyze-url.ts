@@ -31,7 +31,7 @@ router.post("/analyze-url", (req, res): void => {
   }
 });
 
-router.post("/analyze-url/explanation", async (req, res): Promise<void> => {
+router.post("/analyze-url-explanation", async (req, res): Promise<void> => {
   const parsedBody = GenerateUrlExplanationBody.safeParse(req.body);
   if (!parsedBody.success || !isSupportedUrl(parsedBody.data?.url ?? "")) {
     res.status(400).json({ error: "Enter a valid HTTP or HTTPS URL." });
@@ -40,7 +40,7 @@ router.post("/analyze-url/explanation", async (req, res): Promise<void> => {
 
   const explanation = await generateAiExplanation(
     parsedBody.data.url,
-    parsedBody.data.signals,
+    parsedBody.data.analysis.signals,
     req.log,
   );
   if (!explanation) {
