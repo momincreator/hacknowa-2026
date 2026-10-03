@@ -33,7 +33,6 @@ import {
 } from 'lucide-react';
 import {
   useAnalyzeUrl,
-  useGenerateUrlExplanation,
   type UrlAnalysis,
   type UrlSignal,
 } from '@workspace/api-client-react';
@@ -60,20 +59,55 @@ const examples = [
 function Home() {
   const [analysis, setAnalysis] = useState<UrlAnalysis | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
+  const [explanationPending, setExplanationPending] = useState(false);
   const [explanationUnavailable, setExplanationUnavailable] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const analyzeUrl = useAnalyzeUrl();
-  const generateExplanation = useGenerateUrlExplanation();
   const form = useForm<UrlForm>({
     resolver: zodResolver(urlSchema),
     defaultValues: { url: '' },
   });
   const watchedUrl = form.watch('url');
 
+  const requestExplanation = async (url: string, result: UrlAnalysis) => {
+    setExplanationPending(true);
+    try {
+      const response = await fetch('/api/analyze-url-explanation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, analysis: result }),
+      });
+
+      if (!response.ok) {
+        setExplanationUnavailable(true);
+        return;
+      }
+
+      const data: unknown = await response.json();
+      const explanationText =
+        typeof data === 'object' && data !== null && 'explanation' in data &&
+        typeof data.explanation === 'string'
+          ? data.explanation.trim()
+          : '';
+
+      if (explanationText) {
+        setExplanation(explanationText);
+      } else {
+        setExplanationUnavailable(true);
+      }
+    } catch (error) {
+      console.warn('AI explanation request failed', error);
+      setExplanationUnavailable(true);
+    } finally {
+      setExplanationPending(false);
+    }
+  };
+
   const onSubmit = (values: UrlForm) => {
     setErrorMessage('');
     setAnalysis(null);
     setExplanation(null);
+    setExplanationPending(false);
     setExplanationUnavailable(false);
     analyzeUrl.mutate(
       { data: { url: values.url.trim() } },
@@ -81,13 +115,7 @@ function Home() {
         onSuccess: (result) => {
           const submittedUrl = values.url.trim();
           setAnalysis(result);
-          generateExplanation.mutate(
-            { data: { url: submittedUrl, analysis: result } },
-            {
-              onSuccess: (response) => setExplanation(response.explanation),
-              onError: () => setExplanationUnavailable(true),
-            },
-          );
+          void requestExplanation(submittedUrl, result);
         },
         onError: (error) => {
           const candidate = error as { response?: { data?: { error?: string } }; message?: string };
@@ -165,11 +193,11 @@ function Home() {
                 </div>
                 <button
                   type="submit"
-                  disabled={analyzeUrl.isPending || generateExplanation.isPending}
+                  disabled={analyzeUrl.isPending || explanationPending}
                   className="focus-ring inline-flex min-h-14 items-center justify-center gap-2 rounded-[17px] bg-gradient-to-r from-cyan-300 via-sky-300 to-blue-400 px-6 text-sm font-bold text-slate-950 shadow-[0_8px_24px_hsl(190_92%_58%_/_0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105 hover:shadow-[0_12px_30px_hsl(190_92%_58%_/_0.3)] active:translate-y-0 disabled:cursor-wait disabled:opacity-65 sm:min-w-[158px]"
                   data-testid="button-analyze-url"
                 >
-                  {analyzeUrl.isPending || generateExplanation.isPending ? (
+                  {analyzeUrl.isPending || explanationPending ? (
                     <>
                       <span className="size-4 animate-spin rounded-full border-2 border-primary-foreground/35 border-t-primary-foreground" />
                       {analyzeUrl.isPending ? 'Checking' : 'Generating'}
@@ -217,11 +245,12 @@ function Home() {
           <AnalysisResult
             analysis={analysis}
             explanation={explanation}
-            explanationPending={generateExplanation.isPending}
+            explanationPending={explanationPending}
             explanationUnavailable={explanationUnavailable}
             onAnalyzeAnother={() => {
               setAnalysis(null);
               setExplanation(null);
+              setExplanationPending(false);
               setExplanationUnavailable(false);
               setErrorMessage('');
               form.reset();
