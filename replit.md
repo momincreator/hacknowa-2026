@@ -1,6 +1,8 @@
-# PhishGuard AI
+# LinkSage AI
 
-PhishGuard AI analyzes suspicious URL text with safe, explainable heuristics before a user clicks.
+Know before you click.
+
+LinkSage AI provides AI-powered pre-click URL risk analysis that explains suspicious signals in plain English.
 
 ## Run & Operate
 

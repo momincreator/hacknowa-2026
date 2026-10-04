@@ -143,7 +143,7 @@ function Home() {
             <span className="flex size-10 items-center justify-center rounded-[14px] bg-gradient-to-br from-cyan-300 to-blue-500 text-slate-950 shadow-[0_0_28px_hsl(190_92%_58%_/_0.24)]">
               <ShieldCheck className="size-5" strokeWidth={2.5} />
             </span>
-            <span className="text-[15px] font-bold tracking-[-0.02em]">PhishGuard <span className="font-mono text-[11px] font-medium text-primary">AI</span></span>
+            <span className="text-[15px] font-bold tracking-[-0.02em]">LinkSage <span className="font-mono text-[11px] font-medium text-primary">AI</span></span>
           </a>
           <a href="#how-it-works" className="focus-ring hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:flex" data-testid="link-how-it-works">
             How it works <ArrowRight className="size-3.5" />
@@ -160,13 +160,13 @@ function Home() {
           <div className="mx-auto max-w-4xl animate-float-in text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/[0.07] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.13em] text-primary shadow-[0_0_30px_hsl(190_92%_58%_/_0.08)]" data-testid="badge-analyst-note">
               <Sparkles className="size-3.5" />
-              A calmer way to click
+              Know before you click.
             </div>
             <h1 className="mx-auto max-w-4xl text-balance text-[clamp(2.7rem,8vw,5.6rem)] font-semibold leading-[0.99] tracking-[-0.065em] text-foreground">
               Check a suspicious link <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-violet-300 bg-clip-text text-transparent">before you click.</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-              Read the signals in a link before it leads anywhere. Get a clear, human explanation and a safer next step.
+              AI-powered pre-click URL risk analysis that explains suspicious signals in plain English.
             </p>
           </div>
 
@@ -303,7 +303,7 @@ function Explainer() {
         <div>
           <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">Clarity over alarm</p>
           <h2 className="max-w-xl text-3xl font-semibold leading-tight tracking-[-0.045em] sm:text-4xl">A little context can change your next click.</h2>
-          <p className="mt-5 max-w-xl leading-7 text-muted-foreground">A link can look familiar and still hide a different destination. PhishGuard surfaces the small details people often miss: a lookalike domain, an urgent path, or a link that asks for more trust than it has earned.</p>
+          <p className="mt-5 max-w-xl leading-7 text-muted-foreground">A link can look familiar and still hide a different destination. LinkSage AI surfaces the small details people often miss: a lookalike domain, an urgent path, or a link that asks for more trust than it has earned.</p>
         </div>
         <div className="surface-card rounded-[24px] border border-white/[0.08] p-5 transition-transform duration-300 hover:-translate-y-1 sm:p-7">
           <div className="flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-xl border border-violet-300/15 bg-violet-300/[0.08] text-violet-200"><Lightbulb className="size-4" /></span><h3 className="font-semibold">A good answer is actionable</h3></div>
@@ -381,7 +381,7 @@ function AnalysisResult({
       <section className="relative mt-5 overflow-hidden rounded-[24px] border border-violet-300/15 bg-[linear-gradient(125deg,hsl(252_46%_18%_/_0.74),hsl(224_37%_11%_/_0.98)_55%,hsl(190_44%_14%_/_0.72))] p-5 shadow-lg sm:p-7" aria-live="polite" data-testid="section-ai-explanation">
         <div className="pointer-events-none absolute -right-12 -top-20 size-56 rounded-full bg-violet-400/[0.09] blur-3xl" />
         <div className="relative flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-300/[0.1] text-violet-200"><Sparkles className="size-4" /></span><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-violet-200/80">PhishGuard intelligence</p><h3 className="mt-0.5 font-semibold">AI explanation</h3></div></div>
+          <div className="flex items-center gap-3"><span className="flex size-10 items-center justify-center rounded-xl border border-violet-300/20 bg-violet-300/[0.1] text-violet-200"><Sparkles className="size-4" /></span><div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-violet-200/80">LinkSage AI intelligence</p><h3 className="mt-0.5 font-semibold">AI explanation</h3></div></div>
           <span className="hidden rounded-full border border-white/[0.09] bg-black/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:inline-flex">Optional insight</span>
         </div>
         {explanationPending ? (
@@ -424,7 +424,7 @@ function SignalRow({ signal }: { signal: UrlSignal }) {
 
 function HowItWorks() {
   const steps = [
-    ['01', 'Paste, do not open', 'Share the URL you are unsure about. PhishGuard checks the text itself without loading the destination.'],
+    ['01', 'Paste, do not open', 'Share the URL you are unsure about. LinkSage AI checks the text itself without loading the destination.'],
     ['02', 'Signals become context', 'We look at the domain, URL structure, and common social-engineering patterns.'],
     ['03', 'You choose with clarity', 'Get a measured risk level, the evidence behind it, and a practical recommendation.'],
   ];
@@ -432,7 +432,7 @@ function HowItWorks() {
 }
 
 function FooterInfo() {
-  return <footer className="border-t border-white/[0.07] py-12 sm:py-16" data-testid="section-limitations"><div className="grid gap-10 md:grid-cols-3 md:gap-8"><div><div className="flex items-center gap-2 font-semibold"><ShieldCheck className="size-4 text-primary" /> PhishGuard <span className="font-mono text-[10px] text-primary">AI</span></div><p className="mt-3 text-sm leading-6 text-muted-foreground">A pre-click pause for the moments when a link does not feel quite right.</p></div><div><h3 className="text-sm font-semibold">Know the limits</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">No automated tool can promise perfect safety. A low-risk result is not permission to share passwords or payment details. If a message creates urgency, verify it through a separate trusted channel.</p></div><div><h3 className="text-sm font-semibold">Privacy note</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">We analyze the URL you submit. We do not visit the destination or ask you to sign in. Avoid pasting links containing private tokens or personal information.</p></div></div><div className="mt-10 rounded-xl border border-amber-200/15 bg-amber-200/[0.045] px-4 py-3 text-xs leading-5 text-amber-100/90"><strong className="text-amber-100">Safety reminder:</strong> PhishGuard AI provides a risk assessment, not a guarantee of safety. Never enter passwords, OTPs, or financial information on a suspicious website.</div><div className="mt-5 flex flex-col gap-3 border-t border-white/[0.07] pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><span className="inline-flex items-center gap-2"><Info className="size-3.5" /> Built for informed clicks, not fear.</span><span className="font-mono">pre-click / 01</span></div></footer>;
+  return <footer className="border-t border-white/[0.07] py-12 sm:py-16" data-testid="section-limitations"><div className="grid gap-10 md:grid-cols-3 md:gap-8"><div><div className="flex items-center gap-2 font-semibold"><ShieldCheck className="size-4 text-primary" /> LinkSage <span className="font-mono text-[10px] text-primary">AI</span></div><p className="mt-3 text-sm leading-6 text-muted-foreground">A pre-click pause for the moments when a link does not feel quite right.</p></div><div><h3 className="text-sm font-semibold">Know the limits</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">No automated tool can promise perfect safety. A low-risk result is not permission to share passwords or payment details. If a message creates urgency, verify it through a separate trusted channel.</p></div><div><h3 className="text-sm font-semibold">Privacy note</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">We analyze the URL you submit. We do not visit the destination or ask you to sign in. Avoid pasting links containing private tokens or personal information.</p></div></div><div className="mt-10 rounded-xl border border-amber-200/15 bg-amber-200/[0.045] px-4 py-3 text-xs leading-5 text-amber-100/90"><strong className="text-amber-100">Safety reminder:</strong> LinkSage AI provides a risk assessment, not a guarantee of safety. Never enter passwords, OTPs, or financial information on a suspicious website.</div><div className="mt-5 flex flex-col gap-3 border-t border-white/[0.07] pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><span className="inline-flex items-center gap-2"><Info className="size-3.5" /> Built for informed clicks, not fear.</span><span className="font-mono">pre-click / 01</span></div></footer>;
 }
 
 function riskMeta(risk: UrlAnalysis['risk']) {

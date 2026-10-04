@@ -1,6 +1,8 @@
-# PhishGuard AI
+# LinkSage AI
 
-PhishGuard AI is a mobile-first web app for checking a suspicious link before opening it. It performs a safe, explainable risk assessment from the URL text alone and translates technical signals into practical next steps.
+Know before you click.
+
+LinkSage AI is a mobile-first web app for checking a suspicious link before opening it. It provides AI-powered pre-click URL risk analysis that explains suspicious signals in plain English.
 
 ## The problem it solves
 
@@ -71,8 +73,8 @@ pnpm --filter @workspace/phishguard-ai run build
 
 ## Limitations and future improvements
 
-PhishGuard AI does not guarantee safety, inspect page contents, check reputation feeds, resolve redirects, or replace a browser's built-in protections. Users should never enter passwords, OTPs, banking information, or other sensitive information on a suspicious website.
+LinkSage AI does not guarantee safety, inspect page contents, check reputation feeds, resolve redirects, or replace a browser's built-in protections. Users should never enter passwords, OTPs, banking information, or other sensitive information on a suspicious website.
 
 Possible future improvements include optional reputation lookups through a privacy-conscious threat-intelligence provider, redirect-chain analysis in a sandbox, user education flows, multilingual explanations, and confidence calibration against a labeled dataset.
 
-> **Disclaimer:** PhishGuard AI provides a risk assessment, not a guarantee of safety. Never enter passwords, OTPs, or financial information on a suspicious website.
+> **Disclaimer:** LinkSage AI provides a risk assessment, not a guarantee of safety. Never enter passwords, OTPs, or financial information on a suspicious website.

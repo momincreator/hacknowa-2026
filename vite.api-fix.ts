@@ -112,7 +112,7 @@ function phishguardApi(): Plugin {
             if (/[?&](url|redirect|redirect_url|return|returnUrl|next|target|dest|destination)=/i.test(query) ||
                 /\/redirect(?:\/|$)/i.test(path)) {
               add("Redirect indicator", 8,
-                "The URL contains a redirect-style parameter or path. PhishGuard does not follow it.", "moderate");
+                "The URL contains a redirect-style parameter or path. LinkSage AI does not follow it.", "moderate");
             }
 
             score = Math.min(100, score);

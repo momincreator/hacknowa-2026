@@ -228,7 +228,7 @@ export default function handler(req, res) {
         "redirect",
         "Redirect indicator",
         8,
-        "The URL contains a redirect-style parameter or path. PhishGuard does not follow it.",
+        "The URL contains a redirect-style parameter or path. LinkSage AI does not follow it.",
         "caution",
         "URL structure"
       );
@@ -258,7 +258,7 @@ export default function handler(req, res) {
         id: "no-major-signals",
         label: "No major suspicious signals",
         detail:
-          "The URL did not match the suspicious patterns currently checked by PhishGuard.",
+          "The URL did not match the suspicious patterns currently checked by LinkSage AI.",
         severity: "positive",
         points: 0,
         category: "Overview",

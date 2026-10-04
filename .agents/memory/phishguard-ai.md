@@ -1,6 +1,6 @@
 ---
 name: URL safety boundary
-description: Product safety and architecture constraints for the PhishGuard URL analyzer.
+description: Product safety and architecture constraints for the LinkSage AI URL analyzer.
 ---
 
 The analyzer must treat submitted URLs as untrusted text: parse and score them locally, never fetch or open them, and never request credentials or sensitive data from the user. The built-in heuristic assessment is the reliable default; any AI explanation is an optional server-side enhancement and must not produce fabricated results when unconfigured.

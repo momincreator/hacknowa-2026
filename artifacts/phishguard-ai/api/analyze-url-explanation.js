@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     }
 
     const prompt = `
-You are PhishGuard AI, a calm cybersecurity assistant.
+You are LinkSage AI, a calm cybersecurity assistant.
 
 Explain the following URL risk assessment in simple language.
 
