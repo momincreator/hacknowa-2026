@@ -56,6 +56,40 @@ const examples = [
   { label: 'Account sign-in', value: 'https://accounts.google.com' },
 ];
 
+function LinkSageMark({ className }: { className: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      viewBox="0 0 48 48"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M24 5.5 39 11v10.3c0 9.1-5.9 16.1-15 21.2C14.9 37.4 9 30.4 9 21.3V11L24 5.5Z"
+        fill="currentColor"
+        fillOpacity=".12"
+        stroke="currentColor"
+        strokeLinejoin="round"
+        strokeWidth="2.2"
+      />
+      <g
+        stroke="#e2e8f0"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2.1"
+      >
+        <path d="M20 26a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7" />
+        <path d="M28 22a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7" />
+      </g>
+      <path
+        d="m33 11 .8 2.2L36 14l-2.2.8L33 17l-.8-2.2L30 14l2.2-.8L33 11Z"
+        fill="#a5f3fc"
+      />
+    </svg>
+  );
+}
+
 function Home() {
   const [analysis, setAnalysis] = useState<UrlAnalysis | null>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
@@ -139,9 +173,9 @@ function Home() {
     <main className="min-h-[100dvh] overflow-hidden bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#0b1020]/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 lg:px-8">
-          <a href="#top" className="focus-ring flex items-center gap-3 rounded-lg" data-testid="link-brand">
-            <span className="flex size-10 items-center justify-center rounded-[14px] bg-gradient-to-br from-cyan-300 to-blue-500 text-slate-950 shadow-[0_0_28px_hsl(190_92%_58%_/_0.24)]">
-              <ShieldCheck className="size-5" strokeWidth={2.5} />
+          <a href="#top" aria-label="LinkSage AI home" className="focus-ring flex items-center gap-3 rounded-lg" data-testid="link-brand">
+            <span className="flex size-10 items-center justify-center rounded-[14px] border border-cyan-200/15 bg-cyan-300/[0.06] text-primary shadow-[0_0_28px_hsl(190_92%_58%_/_0.16)]">
+              <LinkSageMark className="size-9" />
             </span>
             <span className="text-[15px] font-bold tracking-[-0.02em]">LinkSage <span className="font-mono text-[11px] font-medium text-primary">AI</span></span>
           </a>
@@ -432,7 +466,7 @@ function HowItWorks() {
 }
 
 function FooterInfo() {
-  return <footer className="border-t border-white/[0.07] py-12 sm:py-16" data-testid="section-limitations"><div className="grid gap-10 md:grid-cols-3 md:gap-8"><div><div className="flex items-center gap-2 font-semibold"><ShieldCheck className="size-4 text-primary" /> LinkSage <span className="font-mono text-[10px] text-primary">AI</span></div><p className="mt-3 text-sm leading-6 text-muted-foreground">A pre-click pause for the moments when a link does not feel quite right.</p></div><div><h3 className="text-sm font-semibold">Know the limits</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">No automated tool can promise perfect safety. A low-risk result is not permission to share passwords or payment details. If a message creates urgency, verify it through a separate trusted channel.</p></div><div><h3 className="text-sm font-semibold">Privacy note</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">We analyze the URL you submit. We do not visit the destination or ask you to sign in. Avoid pasting links containing private tokens or personal information.</p></div></div><div className="mt-10 rounded-xl border border-amber-200/15 bg-amber-200/[0.045] px-4 py-3 text-xs leading-5 text-amber-100/90"><strong className="text-amber-100">Safety reminder:</strong> LinkSage AI provides a risk assessment, not a guarantee of safety. Never enter passwords, OTPs, or financial information on a suspicious website.</div><div className="mt-5 flex flex-col gap-3 border-t border-white/[0.07] pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><span className="inline-flex items-center gap-2"><Info className="size-3.5" /> Built for informed clicks, not fear.</span><span className="font-mono">pre-click / 01</span></div></footer>;
+  return <footer className="border-t border-white/[0.07] py-12 sm:py-16" data-testid="section-limitations"><div className="grid gap-10 md:grid-cols-3 md:gap-8"><div><div className="flex items-center gap-2 font-semibold"><LinkSageMark className="size-5 text-primary" /> LinkSage <span className="font-mono text-[10px] text-primary">AI</span></div><p className="mt-3 text-sm leading-6 text-muted-foreground">A pre-click pause for the moments when a link does not feel quite right.</p></div><div><h3 className="text-sm font-semibold">Know the limits</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">No automated tool can promise perfect safety. A low-risk result is not permission to share passwords or payment details. If a message creates urgency, verify it through a separate trusted channel.</p></div><div><h3 className="text-sm font-semibold">Privacy note</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">We analyze the URL you submit. We do not visit the destination or ask you to sign in. Avoid pasting links containing private tokens or personal information.</p></div></div><div className="mt-10 rounded-xl border border-amber-200/15 bg-amber-200/[0.045] px-4 py-3 text-xs leading-5 text-amber-100/90"><strong className="text-amber-100">Safety reminder:</strong> LinkSage AI provides a risk assessment, not a guarantee of safety. Never enter passwords, OTPs, or financial information on a suspicious website.</div><div className="mt-5 flex flex-col gap-3 border-t border-white/[0.07] pt-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><span className="inline-flex items-center gap-2"><Info className="size-3.5" /> Built for informed clicks, not fear.</span><span className="font-mono">pre-click / 01</span></div></footer>;
 }
 
 function riskMeta(risk: UrlAnalysis['risk']) {
