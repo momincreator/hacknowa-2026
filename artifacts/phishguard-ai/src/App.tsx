@@ -56,6 +56,28 @@ const examples = [
   { label: 'Account sign-in', value: 'https://accounts.google.com' },
 ];
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function explanationFromResponse(value: unknown, depth = 0): string | null {
+  if (depth > 2 || !isRecord(value)) return null;
+
+  if ('explanation' in value && typeof value.explanation === 'string') {
+    const explanation = value.explanation.trim();
+    if (explanation) return explanation;
+  }
+
+  for (const key of ['data', 'result', 'payload']) {
+    if (key in value) {
+      const explanation = explanationFromResponse(value[key], depth + 1);
+      if (explanation) return explanation;
+    }
+  }
+
+  return null;
+}
+
 function LinkSageMark({ className }: { className: string }) {
   return (
     <svg
@@ -118,17 +140,15 @@ function Home() {
         signal: controller.signal,
       });
 
-      if (!response.ok) {
-        setExplanationUnavailable(true);
-        return;
+      const body = await response.text();
+      let data: unknown;
+      try {
+        data = JSON.parse(body);
+      } catch {
+        data = null;
       }
-
-      const data: unknown = await response.json();
-      const explanationText =
-        typeof data === 'object' && data !== null && 'explanation' in data &&
-        typeof data.explanation === 'string'
-          ? data.explanation.trim()
-          : '';
+      if (explanationController.current !== controller) return;
+      const explanationText = explanationFromResponse(data);
 
       if (explanationText) {
         setExplanation(explanationText);

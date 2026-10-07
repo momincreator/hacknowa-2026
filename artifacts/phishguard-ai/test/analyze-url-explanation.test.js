@@ -17,7 +17,7 @@ function createResponse() {
   };
 }
 
-function restoreApiKey(t) {
+function configureApiKey(t, value = "test-api-key") {
   const previousApiKey = process.env.GEMINI_API_KEY;
   t.after(() => {
     if (previousApiKey === undefined) {
@@ -26,11 +26,35 @@ function restoreApiKey(t) {
       process.env.GEMINI_API_KEY = previousApiKey;
     }
   });
+  if (value == null) {
+    delete process.env.GEMINI_API_KEY;
+  } else {
+    process.env.GEMINI_API_KEY = value;
+  }
 }
 
-test("uses the bounded Vercel duration and returns Gemini's explanation", async (t) => {
-  restoreApiKey(t);
-  process.env.GEMINI_API_KEY = "test-api-key";
+function mockGemini(t, json, { ok = true, status = 200 } = {}) {
+  return t.mock.method(globalThis, "fetch", async (input, options) => {
+    assert.match(String(input), /models\/gemini-3\.8-flash:generateContent/);
+    assert.match(String(input), /key=test-api-key/);
+    assert.equal(options.method, "POST");
+    const response = {
+      ok,
+      status,
+      json: async () => json,
+    };
+    return response;
+  });
+}
+
+async function requestExplanation(response = { url: "https://example.test/" }) {
+  const result = createResponse();
+  await handler({ method: "POST", body: response }, result);
+  return result;
+}
+
+test("uses the bounded Vercel duration and joins normal text parts, excluding thoughts", async (t) => {
+  configureApiKey(t);
   assert.deepEqual(config, { maxDuration: 45 });
 
   t.mock.method(globalThis, "setTimeout", (_callback, delay) => {
@@ -38,13 +62,10 @@ test("uses the bounded Vercel duration and returns Gemini's explanation", async 
     return 1;
   });
   t.mock.method(globalThis, "clearTimeout", () => {});
-
-  let request;
+  let requestBody;
   t.mock.method(globalThis, "fetch", async (input, options) => {
-    request = {
-      url: String(input),
-      body: JSON.parse(options.body),
-    };
+    assert.match(String(input), /models\/gemini-3\.8-flash:generateContent/);
+    requestBody = JSON.parse(options.body);
     return {
       ok: true,
       status: 200,
@@ -52,8 +73,9 @@ test("uses the bounded Vercel duration and returns Gemini's explanation", async 
         candidates: [{
           content: {
             parts: [
-              { text: "Internal thought", thought: true },
-              { text: "Review the domain carefully." },
+              { text: "Internal thought must not appear. ", thought: true },
+              { text: "This URL appears low risk. " },
+              { text: "Check the domain before sharing information." },
             ],
           },
           finishReason: "STOP",
@@ -62,64 +84,176 @@ test("uses the bounded Vercel duration and returns Gemini's explanation", async 
     };
   });
 
-  const response = createResponse();
-  await handler(
-    {
-      method: "POST",
-      body: {
-        url: "https://example.test/login",
-        analysis: { risk: "Medium", score: 42, signals: ["login keyword"] },
-      },
-    },
-    response,
-  );
+  const response = await requestExplanation({
+    url: "https://example.test/",
+    analysis: { risk: "low", score: 0, signals: ["no major signals"] },
+  });
 
   assert.equal(response.statusCode, 200);
   assert.deepEqual(response.body, {
-    explanation: "Review the domain carefully.",
-    aiAvailable: true,
+    explanation:
+      "This URL appears low risk. Check the domain before sharing information.",
   });
-  assert.match(request.url, /models\/gemini-3\.8-flash:generateContent/);
-  assert.match(request.url, /key=test-api-key/);
-  assert.equal(request.body.generationConfig.temperature, 0.2);
-  assert.equal(request.body.generationConfig.thinkingConfig.thinkingLevel, "low");
-  assert.equal(request.body.generationConfig.maxOutputTokens, 1024);
-  assert.match(request.body.contents[0].parts[0].text, /plain-text explanation in 2 to 4 short sentences/);
-  assert.match(request.body.contents[0].parts[0].text, /"url": "https:\/\/example.test\/login"/);
+  assert.equal(requestBody.generationConfig.temperature, 0.2);
+  assert.equal(requestBody.generationConfig.thinkingConfig.thinkingLevel, "low");
+  assert.equal(requestBody.generationConfig.maxOutputTokens, 1024);
+  assert.match(
+    requestBody.contents[0].parts[0].text,
+    /2 to 4 short, complete sentences/,
+  );
+  assert.match(
+    requestBody.contents[0].parts[0].text,
+    /overall risk, the most important signals, and what the user should do next/,
+  );
+  assert.match(requestBody.contents[0].parts[0].text, /never start with a greeting/);
 });
 
-test("rejects a truncated Gemini candidate instead of returning partial text", async (t) => {
-  restoreApiKey(t);
-  process.env.GEMINI_API_KEY = "test-api-key";
-  const warnings = [];
-  t.mock.method(console, "warn", (...args) => warnings.push(args));
-  t.mock.method(globalThis, "fetch", async () => ({
-    ok: true,
-    status: 200,
-    json: async () => ({
-      candidates: [{
-        content: { parts: [{ text: "The URL may be risky because" }] },
-        finishReason: "MAX_TOKENS",
-      }],
-    }),
-  }));
+test("accepts a complete candidate without finishReason", async (t) => {
+  configureApiKey(t);
+  mockGemini(t, {
+    candidates: [{
+      content: {
+        parts: [{ text: "No major warning signs were found. Verify the domain before proceeding." }],
+      },
+    }],
+  });
 
-  const response = createResponse();
-  await handler(
-    { method: "POST", body: { url: "http://192.168.1.10/login" } },
-    response,
+  const response = await requestExplanation();
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.body, {
+    explanation:
+      "No major warning signs were found. Verify the domain before proceeding.",
+  });
+});
+
+test("accepts a complete response with an unspecified finish reason", async (t) => {
+  configureApiKey(t);
+  mockGemini(t, {
+    candidates: [{
+      content: {
+        parts: [{ text: "This URL has limited risk indicators. Avoid sharing sensitive information." }],
+      },
+      finishReason: "FINISH_REASON_UNSPECIFIED",
+    }],
+  });
+
+  const response = await requestExplanation();
+  assert.equal(response.statusCode, 200);
+  assert.equal(
+    response.body.explanation,
+    "This URL has limited risk indicators. Avoid sharing sensitive information.",
+  );
+});
+
+test("accepts a complete response with the normal STOP finish reason", async (t) => {
+  configureApiKey(t);
+  mockGemini(t, {
+    candidates: [{
+      content: {
+        parts: [{ text: "The URL contains suspicious signals. Verify it through a trusted channel." }],
+      },
+      finishReason: "STOP",
+    }],
+  });
+
+  const response = await requestExplanation();
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body.explanation, "The URL contains suspicious signals. Verify it through a trusted channel.");
+});
+
+test("rejects genuinely empty and thought-only responses", async (t) => {
+  configureApiKey(t);
+  t.mock.method(console, "warn", () => {});
+
+  for (const parts of [
+    [],
+    [{ text: "Internal reasoning only.", thought: true }],
+  ]) {
+    mockGemini(t, {
+      candidates: [{ content: { parts }, finishReason: "STOP" }],
+    });
+    const response = await requestExplanation();
+    assert.equal(response.statusCode, 502);
+    assert.deepEqual(response.body, {
+      explanation: null,
+      error: "AI explanation service failed",
+    });
+  }
+});
+
+test("rejects MAX_TOKENS responses and visible incomplete fragments", async (t) => {
+  configureApiKey(t);
+  t.mock.method(console, "warn", () => {});
+
+  for (const candidate of [
+    {
+      content: { parts: [{ text: "This URL may be risky because" }] },
+      finishReason: "MAX_TOKENS",
+    },
+    {
+      content: { parts: [{ text: "This URL may be risky because" }] },
+    },
+  ]) {
+    mockGemini(t, { candidates: [candidate] });
+    const response = await requestExplanation();
+    assert.equal(response.statusCode, 502);
+    assert.deepEqual(response.body, {
+      explanation: null,
+      error: "AI explanation service failed",
+    });
+  }
+});
+
+test("returns a generic provider failure without exposing provider details", async (t) => {
+  configureApiKey(t);
+  t.mock.method(console, "warn", () => {});
+  mockGemini(
+    t,
+    {
+      error: {
+        code: 403,
+        status: "PERMISSION_DENIED",
+        message: "API key test-api-key is invalid",
+      },
+    },
+    { ok: false, status: 403 },
   );
 
+  const response = await requestExplanation();
   assert.equal(response.statusCode, 502);
   assert.deepEqual(response.body, {
+    explanation: null,
     error: "AI explanation service failed",
-    aiAvailable: false,
   });
-  assert.equal(warnings[0][1].category, "incomplete-response");
-  assert.equal(warnings[0][1].providerReason, "MAX_TOKENS");
+  assert.doesNotMatch(JSON.stringify(response.body), /test-api-key|PERMISSION_DENIED/);
 });
 
-test("rejects non-POST methods without calling Gemini", async (t) => {
+test("returns the required JSON shape when the provider key is missing", async (t) => {
+  configureApiKey(t, null);
+  const response = await requestExplanation();
+  assert.equal(response.statusCode, 503);
+  assert.deepEqual(response.body, {
+    explanation: null,
+    error: "AI explanation is not configured",
+  });
+});
+
+test("returns a provider failure for network errors without fabricating an explanation", async (t) => {
+  configureApiKey(t);
+  t.mock.method(console, "warn", () => {});
+  t.mock.method(globalThis, "fetch", async () => {
+    throw new Error("network failure");
+  });
+
+  const response = await requestExplanation();
+  assert.equal(response.statusCode, 502);
+  assert.deepEqual(response.body, {
+    explanation: null,
+    error: "AI explanation service failed",
+  });
+});
+
+test("returns the required JSON shape for non-POST requests", async (t) => {
   t.mock.method(globalThis, "fetch", () => {
     assert.fail("Gemini should not be called for a non-POST request");
   });
@@ -128,26 +262,8 @@ test("rejects non-POST methods without calling Gemini", async (t) => {
   await handler({ method: "GET" }, response);
 
   assert.equal(response.statusCode, 405);
-  assert.deepEqual(response.body, { error: "Method not allowed" });
-});
-
-test("reports a failed provider request without fabricating an explanation", async (t) => {
-  restoreApiKey(t);
-  process.env.GEMINI_API_KEY = "test-api-key";
-  t.mock.method(console, "warn", () => {});
-  t.mock.method(globalThis, "fetch", async () => {
-    throw new Error("network failure");
-  });
-
-  const response = createResponse();
-  await handler(
-    { method: "POST", body: { url: "https://example.test/" } },
-    response,
-  );
-
-  assert.equal(response.statusCode, 502);
   assert.deepEqual(response.body, {
-    error: "AI explanation service failed",
-    aiAvailable: false,
+    explanation: null,
+    error: "Method not allowed",
   });
 });
