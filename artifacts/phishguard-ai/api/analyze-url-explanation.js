@@ -88,7 +88,41 @@ ${JSON.stringify(analysis?.signals || [])}
         );
 
         if (!response.ok) {
-          logFailure("http-error", response.status);
+          let providerError;
+          try {
+            providerError = (await response.json())?.error;
+          } catch {
+            providerError = undefined;
+          }
+
+          const sanitizeProviderValue = (value) => {
+            if (typeof value !== "string" && typeof value !== "number") {
+              return undefined;
+            }
+            return String(value).replace(/[^a-zA-Z0-9_.-]/g, "").slice(0, 80);
+          };
+          const sanitizeProviderMessage = (message) => {
+            if (typeof message !== "string") return undefined;
+            const submittedUrl = String(url);
+            return message
+              .replaceAll(apiKey, "[redacted]")
+              .replaceAll(encodeURIComponent(apiKey), "[redacted]")
+              .replaceAll(prompt, "[redacted prompt]")
+              .replaceAll(submittedUrl, "[redacted submitted URL]")
+              .replaceAll(encodeURIComponent(submittedUrl), "[redacted submitted URL]")
+              .replace(/https?:\/\/[^\s"'<>]+/gi, "[redacted URL]")
+              .replace(/[\r\n\t]+/g, " ")
+              .slice(0, 300);
+          };
+
+          console.warn("Gemini explanation attempt failed", {
+            model,
+            status: response.status,
+            providerStatus: sanitizeProviderValue(providerError?.status),
+            providerCode: sanitizeProviderValue(providerError?.code),
+            providerMessage: sanitizeProviderMessage(providerError?.message),
+            elapsedMs: Date.now() - startedAt,
+          });
           return "";
         }
 
