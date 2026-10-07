@@ -1,4 +1,8 @@
-const GEMINI_REQUEST_TIMEOUT_MS = 6_000;
+const GEMINI_REQUEST_TIMEOUT_MS = 40_000;
+
+export const config = {
+  maxDuration: 45,
+};
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -83,6 +87,7 @@ ${JSON.stringify(analysis?.signals || [])}
                 },
               ],
               generationConfig: {
+                maxOutputTokens: 256,
                 thinkingConfig: {
                   thinkingLevel: "low",
                 },
