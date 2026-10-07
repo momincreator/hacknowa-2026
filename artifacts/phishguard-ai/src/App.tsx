@@ -108,7 +108,7 @@ function Home() {
     explanationController.current?.abort();
     const controller = new AbortController();
     explanationController.current = controller;
-    const timeoutId = window.setTimeout(() => controller.abort(), 8_000);
+    const timeoutId = window.setTimeout(() => controller.abort(), 13_000);
     setExplanationPending(true);
     try {
       const response = await fetch('/api/analyze-url-explanation', {

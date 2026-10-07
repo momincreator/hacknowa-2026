@@ -1,3 +1,5 @@
+const GEMINI_REQUEST_TIMEOUT_MS = 6_000;
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -49,46 +51,82 @@ Detected signals:
 ${JSON.stringify(analysis?.signals || [])}
 `;
 
-    const generateContent = (model) =>
-      fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [{ text: prompt }],
-              },
-            ],
-          }),
-        }
+    const generateContent = async (model) => {
+      const controller = new AbortController();
+      const startedAt = Date.now();
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        GEMINI_REQUEST_TIMEOUT_MS
       );
+
+      const logFailure = (category, status) => {
+        console.warn("Gemini explanation attempt failed", {
+          model,
+          status,
+          category,
+          elapsedMs: Date.now() - startedAt,
+        });
+      };
+
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [{ text: prompt }],
+                },
+              ],
+            }),
+            signal: controller.signal,
+          }
+        );
+
+        if (!response.ok) {
+          logFailure("http-error", response.status);
+          return "";
+        }
+
+        try {
+          const data = await response.json();
+          const parts = data?.candidates?.[0]?.content?.parts;
+          const explanation = Array.isArray(parts)
+            ? parts
+                .map((part) => (typeof part?.text === "string" ? part.text : ""))
+                .join("")
+                .trim()
+            : "";
+
+          if (!explanation) {
+            logFailure("empty-or-invalid-response", response.status);
+          }
+          return explanation;
+        } catch {
+          logFailure(
+            controller.signal.aborted ? "timeout" : "invalid-response",
+            response.status
+          );
+          return "";
+        }
+      } catch {
+        logFailure(
+          controller.signal.aborted ? "timeout" : "network-error",
+          undefined
+        );
+        return "";
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
 
     let explanation = "";
     for (const model of ["gemini-3.8-flash", "gemini-2.5-flash"]) {
-      let response;
-      try {
-        response = await generateContent(model);
-      } catch {
-        continue;
-      }
-      if (!response.ok) continue;
-
-      try {
-        const data = await response.json();
-        explanation = Array.isArray(data?.candidates?.[0]?.content?.parts)
-          ? data.candidates[0].content.parts
-              .map((part) => part?.text || "")
-              .join("")
-              .trim()
-          : "";
-      } catch {
-        explanation = "";
-      }
-
+      explanation = await generateContent(model);
       if (explanation) break;
     }
 
