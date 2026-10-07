@@ -82,6 +82,11 @@ ${JSON.stringify(analysis?.signals || [])}
                   parts: [{ text: prompt }],
                 },
               ],
+              generationConfig: {
+                thinkingConfig: {
+                  thinkingLevel: "low",
+                },
+              },
             }),
             signal: controller.signal,
           }
@@ -159,10 +164,7 @@ ${JSON.stringify(analysis?.signals || [])}
     };
 
     let explanation = "";
-    for (const model of ["gemini-3.8-flash", "gemini-2.5-flash"]) {
-      explanation = await generateContent(model);
-      if (explanation) break;
-    }
+    explanation = await generateContent("gemini-3.8-flash");
 
     if (!explanation) {
       return res.status(502).json({
