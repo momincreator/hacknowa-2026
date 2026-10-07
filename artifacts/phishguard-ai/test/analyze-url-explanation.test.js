@@ -49,7 +49,15 @@ test("uses the bounded Vercel duration and returns Gemini's explanation", async 
       ok: true,
       status: 200,
       json: async () => ({
-        candidates: [{ content: { parts: [{ text: "Review the domain carefully." }] } }],
+        candidates: [{
+          content: {
+            parts: [
+              { text: "Internal thought", thought: true },
+              { text: "Review the domain carefully." },
+            ],
+          },
+          finishReason: "STOP",
+        }],
       }),
     };
   });
@@ -73,8 +81,42 @@ test("uses the bounded Vercel duration and returns Gemini's explanation", async 
   });
   assert.match(request.url, /models\/gemini-3\.8-flash:generateContent/);
   assert.match(request.url, /key=test-api-key/);
+  assert.equal(request.body.generationConfig.temperature, 0.2);
   assert.equal(request.body.generationConfig.thinkingConfig.thinkingLevel, "low");
-  assert.equal(request.body.generationConfig.maxOutputTokens, 256);
+  assert.equal(request.body.generationConfig.maxOutputTokens, 1024);
+  assert.match(request.body.contents[0].parts[0].text, /plain-text explanation in 2 to 4 short sentences/);
+  assert.match(request.body.contents[0].parts[0].text, /"url": "https:\/\/example.test\/login"/);
+});
+
+test("rejects a truncated Gemini candidate instead of returning partial text", async (t) => {
+  restoreApiKey(t);
+  process.env.GEMINI_API_KEY = "test-api-key";
+  const warnings = [];
+  t.mock.method(console, "warn", (...args) => warnings.push(args));
+  t.mock.method(globalThis, "fetch", async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      candidates: [{
+        content: { parts: [{ text: "The URL may be risky because" }] },
+        finishReason: "MAX_TOKENS",
+      }],
+    }),
+  }));
+
+  const response = createResponse();
+  await handler(
+    { method: "POST", body: { url: "http://192.168.1.10/login" } },
+    response,
+  );
+
+  assert.equal(response.statusCode, 502);
+  assert.deepEqual(response.body, {
+    error: "AI explanation service failed",
+    aiAvailable: false,
+  });
+  assert.equal(warnings[0][1].category, "incomplete-response");
+  assert.equal(warnings[0][1].providerReason, "MAX_TOKENS");
 });
 
 test("rejects non-POST methods without calling Gemini", async (t) => {
