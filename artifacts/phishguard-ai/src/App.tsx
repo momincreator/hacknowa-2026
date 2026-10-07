@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
@@ -96,6 +96,7 @@ function Home() {
   const [explanationPending, setExplanationPending] = useState(false);
   const [explanationUnavailable, setExplanationUnavailable] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const explanationController = useRef<AbortController | null>(null);
   const analyzeUrl = useAnalyzeUrl();
   const form = useForm<UrlForm>({
     resolver: zodResolver(urlSchema),
@@ -104,12 +105,17 @@ function Home() {
   const watchedUrl = form.watch('url');
 
   const requestExplanation = async (url: string, result: UrlAnalysis) => {
+    explanationController.current?.abort();
+    const controller = new AbortController();
+    explanationController.current = controller;
+    const timeoutId = window.setTimeout(() => controller.abort(), 8_000);
     setExplanationPending(true);
     try {
       const response = await fetch('/api/analyze-url-explanation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, analysis: result }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -130,14 +136,23 @@ function Home() {
         setExplanationUnavailable(true);
       }
     } catch (error) {
-      console.warn('AI explanation request failed', error);
+      if (explanationController.current !== controller) return;
+      if (error instanceof Error && error.name !== 'AbortError') {
+        console.warn('AI explanation request failed', error);
+      }
       setExplanationUnavailable(true);
     } finally {
-      setExplanationPending(false);
+      window.clearTimeout(timeoutId);
+      if (explanationController.current === controller) {
+        explanationController.current = null;
+        setExplanationPending(false);
+      }
     }
   };
 
   const onSubmit = (values: UrlForm) => {
+    explanationController.current?.abort();
+    explanationController.current = null;
     setErrorMessage('');
     setAnalysis(null);
     setExplanation(null);
@@ -227,14 +242,14 @@ function Home() {
                 </div>
                 <button
                   type="submit"
-                  disabled={analyzeUrl.isPending || explanationPending}
+                  disabled={analyzeUrl.isPending}
                   className="focus-ring inline-flex min-h-14 items-center justify-center gap-2 rounded-[17px] bg-gradient-to-r from-cyan-300 via-sky-300 to-blue-400 px-6 text-sm font-bold text-slate-950 shadow-[0_8px_24px_hsl(190_92%_58%_/_0.2)] transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105 hover:shadow-[0_12px_30px_hsl(190_92%_58%_/_0.3)] active:translate-y-0 disabled:cursor-wait disabled:opacity-65 sm:min-w-[158px]"
                   data-testid="button-analyze-url"
                 >
-                  {analyzeUrl.isPending || explanationPending ? (
+                  {analyzeUrl.isPending ? (
                     <>
                       <span className="size-4 animate-spin rounded-full border-2 border-primary-foreground/35 border-t-primary-foreground" />
-                      {analyzeUrl.isPending ? 'Checking' : 'Generating'}
+                      Checking
                     </>
                   ) : (
                     <>

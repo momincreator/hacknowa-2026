@@ -67,32 +67,34 @@ ${JSON.stringify(analysis?.signals || [])}
         }
       );
 
-    let response = await generateContent("gemini-3.8-flash");
-    if (response.status === 503) {
-      response = await generateContent("gemini-2.5-flash");
+    let explanation = "";
+    for (const model of ["gemini-3.8-flash", "gemini-2.5-flash"]) {
+      let response;
+      try {
+        response = await generateContent(model);
+      } catch {
+        continue;
+      }
+      if (!response.ok) continue;
+
+      try {
+        const data = await response.json();
+        explanation = Array.isArray(data?.candidates?.[0]?.content?.parts)
+          ? data.candidates[0].content.parts
+              .map((part) => part?.text || "")
+              .join("")
+              .trim()
+          : "";
+      } catch {
+        explanation = "";
+      }
+
+      if (explanation) break;
     }
-
-    if (!response.ok) {
-      const errorText = await response.text();
-
-      return res.status(502).json({
-        error: "AI explanation service failed",
-        aiAvailable: false,
-        details: errorText.slice(0, 300),
-      });
-    }
-
-    const data = await response.json();
-
-    const explanation =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((part) => part.text || "")
-        .join("")
-        .trim() || "";
 
     if (!explanation) {
       return res.status(502).json({
-        error: "AI returned an empty explanation",
+        error: "AI explanation service failed",
         aiAvailable: false,
       });
     }
